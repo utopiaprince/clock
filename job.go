@@ -19,16 +19,17 @@ type Job interface {
 
 // jobItem implementation of  "Job" interface and "rbtree.Item" interface
 type jobItem struct {
-	id           uint64        //唯一键值，内部由管理器生成，以区分同一时刻的不同任务事件
-	actionCount  uint64        //计数器，表示已执行（或触发）的次数
-	actionMax    uint64        //允许执行的最大次数
-	intervalTime time.Duration //间隔时间
-	createTime   time.Time     //创建时间，略有误差
-	actionTime   time.Time     //计算得出的最近一次执行时间点
-	fn           func()        //事件函数
-	msgChan      chan Job      //消息通道，执行时，控制器通过该通道向外部传递消息
+	id           uint64            //唯一键值，内部由管理器生成，以区分同一时刻的不同任务事件
+	actionCount  uint64            //计数器，表示已执行（或触发）的次数
+	actionMax    uint64            //允许执行的最大次数
+	intervalTime time.Duration     //间隔时间
+	createTime   time.Time         //创建时间，略有误差
+	actionTime   time.Time         //计算得出的最近一次执行时间点
+	fn           func(interface{}) //事件函数
+	msgChan      chan Job          //消息通道，执行时，控制器通过该通道向外部传递消息
 	cancelFlag   int32
 	clock        *Clock
+	param        interface{}
 }
 
 // Less Based rbtree ，implements Item interface for sort
@@ -50,9 +51,9 @@ func (je *jobItem) C() <-chan Job {
 func (je *jobItem) action(async bool) {
 	je.actionCount++
 	if async {
-		go safeCall(je.fn)
+		go safeCall(je.fn, je.param)
 	} else {
-		safeCall(je.fn)
+		safeCall(je.fn, je.param)
 	}
 	select {
 	case je.msgChan <- je:
@@ -84,12 +85,12 @@ func (je jobItem) Count() uint64 {
 func (je jobItem) Max() uint64 {
 	return je.actionMax
 }
-func safeCall(fn func()) {
+func safeCall(fn func(interface{}), param interface{}) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Printf("[clock] recovering reason is %+v. More detail:", err)
 			log.Println(string(debug.Stack()))
 		}
 	}()
-	fn()
+	fn(param)
 }
