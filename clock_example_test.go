@@ -11,7 +11,7 @@ func ExampleClock_AddJobRepeat() {
 	var (
 		myClock = NewClock()
 	)
-	fn := func() {
+	fn := func(interface{}) {
 		fmt.Println("schedule repeat")
 
 	}
@@ -36,7 +36,7 @@ func ExampleClock_AddJobForEvent() {
 		myClock = NewClock()
 	)
 	//define a repeat task
-	fn := func() {
+	fn := func(interface{}) {
 		//fmt.Println("schedule repeat")
 	}
 	//add in clock,execute three times,interval 200 millisecond
@@ -63,7 +63,7 @@ func ExampleClock_AddJobForEvent() {
 func ExampleClock_AddJobWithInterval() {
 	var (
 		jobClock = NewClock()
-		jobFunc  = func() {
+		jobFunc  = func(interface{}) {
 			fmt.Println("schedule once")
 		}
 	)
@@ -82,7 +82,7 @@ func ExampleClock_AddJobWithInterval() {
 func ExampleClock_AddJobWithDeadtime() {
 	var (
 		myClock = Default()
-		jobFunc = func() {
+		jobFunc = func(interface{}) {
 			fmt.Println("schedule once")
 		}
 		actionTime = time.Now().Add(time.Millisecond * 500)
@@ -107,7 +107,7 @@ func ExampleClock_RmJob() {
 	var (
 		myClock = NewClock()
 		count   int
-		jobFunc = func() {
+		jobFunc = func(interface{}) {
 			count++
 			fmt.Println("do ", count)
 		}

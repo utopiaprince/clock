@@ -20,7 +20,7 @@ func newOnceJob(delay time.Duration) jobItem {
 	job := jobItem{
 		createTime:   now,
 		intervalTime: delay,
-		fn: func() {
+		fn: func(interface{}) {
 			fmt.Println("临时任务事件")
 		},
 	}

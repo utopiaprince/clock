@@ -181,13 +181,17 @@ func (jl *Clock) UpdateJobTimeout(job Job, actionTime time.Duration) (updated bo
 //	@jobFunc:		Callback function,not nil
 //	return
 // 	@jobScheduled:	A reference to a task that has been scheduled.
-func (jl *Clock) AddJobWithInterval(actionInterval time.Duration, jobFunc func(interface{}), param interface{}) (jobScheduled Job, inserted bool) {
+func (jl *Clock) AddJobWithInterval(actionInterval time.Duration, jobFunc func(interface{}), params ...interface{}) (jobScheduled Job, inserted bool) {
 	if jobFunc == nil || actionInterval.Nanoseconds() <= 0 {
 		return
 	}
 	now := time.Now()
 
 	jl.pause()
+	var param interface{}
+	if len(params) != 0 {
+		param = params[0]
+	}
 	jobScheduled, inserted = jl.addJob(now, actionInterval, 1, jobFunc, param)
 	jl.resume()
 
@@ -200,7 +204,7 @@ func (jl *Clock) AddJobWithInterval(actionInterval time.Duration, jobFunc func(i
 //	return
 // 	@jobScheduled	:	A reference to a task that has been scheduled.
 //	@inserted		:	return false ,if actionTime before time.Now or jobFunc is nil
-func (jl *Clock) AddJobWithDeadtime(actionTime time.Time, jobFunc func(interface{}), param interface{}) (jobScheduled Job, inserted bool) {
+func (jl *Clock) AddJobWithDeadtime(actionTime time.Time, jobFunc func(interface{}), params ...interface{}) (jobScheduled Job, inserted bool) {
 	actionInterval := actionTime.Sub(time.Now())
 	if jobFunc == nil || actionInterval.Nanoseconds() <= 0 {
 		return
@@ -208,6 +212,10 @@ func (jl *Clock) AddJobWithDeadtime(actionTime time.Time, jobFunc func(interface
 	now := time.Now()
 
 	jl.pause()
+	var param interface{}
+	if len(params) != 0 {
+		param = params[0]
+	}
 	jobScheduled, inserted = jl.addJob(now, actionInterval, 1, jobFunc, param)
 	jl.resume()
 
@@ -223,13 +231,17 @@ func (jl *Clock) AddJobWithDeadtime(actionTime time.Time, jobFunc func(interface
 //	@inserted		:	return false ,if interval is not Positiveor jobFunc is nil
 //Note：
 // when jobTimes==0,the job will be executed without limitation。If you no longer use, be sure to call the DelJob method to release
-func (jl *Clock) AddJobRepeat(interval time.Duration, actionMax uint64, jobFunc func(interface{}), param interface{}) (jobScheduled Job, inserted bool) {
+func (jl *Clock) AddJobRepeat(interval time.Duration, actionMax uint64, jobFunc func(interface{}), params ...interface{}) (jobScheduled Job, inserted bool) {
 	if jobFunc == nil || interval.Nanoseconds() <= 0 {
 		return
 	}
 	now := time.Now()
 
 	jl.pause()
+	var param interface{}
+	if len(params) != 0 {
+		param = params[0]
+	}
 	jobScheduled, inserted = jl.addJob(now, interval, actionMax, jobFunc, param)
 	jl.resume()
 

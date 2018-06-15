@@ -40,7 +40,7 @@ func TestClock_AddOnceJob(t *testing.T) {
 		randscope = 50 * 1000 * 1000 //随机范围
 		interval  = time.Millisecond*100 + time.Duration(r.Intn(randscope))
 		myClock   = Default().Reset()
-		jobFunc   = func() {
+		jobFunc   = func(interface{}) {
 			//fmt.Println("任务事件")
 		}
 	)
@@ -69,7 +69,7 @@ func TestJob_Cancel(t *testing.T) {
 		waitChan1 = make(chan struct{})
 		waitChan2 = make(chan struct{})
 
-		jobFunc = func() {
+		jobFunc = func(interface{}) {
 			//do nothing
 		}
 	)
@@ -109,7 +109,7 @@ func TestClock_WaitJobs(t *testing.T) {
 		interval = time.Millisecond
 		waitChan = make(chan struct{})
 		jobsNum  = 1000
-		jobFunc  = func() {
+		jobFunc  = func(interface{}) {
 			//do nothing
 		}
 	)
@@ -140,17 +140,17 @@ func TestClock_UpdateJobTimeout(t *testing.T) {
 	//思路：
 	//检查任务在结束前后进行 update 的情况
 	var (
-		jobsNum= 100
+		jobsNum   = 100
 		randscope = 1 * 1000 * 1000 * 1000
-		jobs= make([]Job, jobsNum)
-		myClock= Default().Reset()
+		jobs      = make([]Job, jobsNum)
+		myClock   = Default().Reset()
 	)
-	fn := func() {
+	fn := func(interface{}) {
 		//do nothing
 		//fmt.Println("fn is action")
 	}
 	for i := 0; i < jobsNum; i++ {
-		delay := time.Microsecond*1500 +time.Duration(r.Intn(randscope)) //[0.5-1.5]
+		delay := time.Microsecond*1500 + time.Duration(r.Intn(randscope)) //[0.5-1.5]
 		job, _ := myClock.AddJobWithInterval(delay, fn)
 		jobs[i] = job
 	}
@@ -171,6 +171,7 @@ func TestClock_UpdateJobTimeout(t *testing.T) {
 	}
 	time.Sleep(time.Second)
 }
+
 //TestClock_Count 测试重复任务定时执行情况
 func TestClock_Count(t *testing.T) {
 	var (
@@ -179,7 +180,7 @@ func TestClock_Count(t *testing.T) {
 		interval = time.Microsecond * 10
 		counter  = new(_Counter)
 	)
-	f := func() {
+	f := func(interface{}) {
 		counter.AddOne()
 	}
 	job, inserted := myClock.AddJobRepeat(interval, uint64(jobsNum), f)
@@ -209,7 +210,7 @@ func TestClock_AddRepeatJob2(t *testing.T) {
 		singalChan <- sigal
 
 	}
-	go func() {
+	go func(interface{}) {
 		cacheSigal := 2
 		for z := range singalChan {
 			if z == cacheSigal {
@@ -218,10 +219,10 @@ func TestClock_AddRepeatJob2(t *testing.T) {
 				cacheSigal = z
 			}
 		}
-	}()
-	event1, inserted1 := myClock.AddJobRepeat(interval1, 0, func() { jobFunc(1) })
+	}(nil)
+	event1, inserted1 := myClock.AddJobRepeat(interval1, 0, func(interface{}) { jobFunc(1) })
 	time.Sleep(time.Millisecond * 10)
-	event2, inserted2 := myClock.AddJobRepeat(interval2, 0, func() { jobFunc(2) })
+	event2, inserted2 := myClock.AddJobRepeat(interval2, 0, func(interface{}) { jobFunc(2) })
 
 	if !inserted1 || !inserted2 {
 		t.Error("add repeat job failure")
@@ -239,10 +240,10 @@ func TestClock_AddMixJob(t *testing.T) {
 		counter1 int
 		counter2 int
 	)
-	f1 := func() {
+	f1 := func(interface{}) {
 		counter1++
 	}
-	f2 := func() {
+	f2 := func(interface{}) {
 		counter2++
 	}
 	_, inserted1 := myClock.AddJobWithInterval(time.Millisecond*500, f1)
@@ -266,7 +267,7 @@ func TestClock_AddJobs(t *testing.T) {
 		counter   = &_Counter{}
 		wg        sync.WaitGroup
 	)
-	f := func() {
+	f := func(interface{}) {
 		//schedule nothing
 	}
 	//创建jobsNum个任务，每个任务都会间隔[1,2)秒内执行一次
@@ -302,7 +303,7 @@ func TestClock_DelJob(t *testing.T) {
 		delmod    = r.Intn(jobsNum)
 		myClock   = Default().Reset()
 	)
-	fn := func() {
+	fn := func(interface{}) {
 		//do nothing
 	}
 	for i := 0; i < jobsNum; i++ {
@@ -331,7 +332,7 @@ func TestClock_DelJobs(t *testing.T) {
 		randscope   = 1 * 1000 * 1000 * 1000
 		jobs        = make([]Job, jobsNum)
 		wantdeljobs = make([]Job, jobsNum)
-		fn          = func() {
+		fn          = func(interface{}) {
 			//do nothing
 		}
 	)
@@ -367,17 +368,17 @@ func TestClock_Delay_200kJob(t *testing.T) {
 		jobInterval = time.Second
 		countChan   = make(chan int, 0)
 		count       = 0
-		fn          = func() {
+		fn          = func(interface{}) {
 			countChan <- 1
 		}
 	)
 	start := time.Now()
 	//初始化20万条任务。考虑到初始化耗时，延时1秒后启动
-	go func() {
+	go func(interface{}) {
 		for i := 0; i < jobsNum; i++ {
 			myClock.AddJobWithInterval(jobInterval, fn)
 		}
-	}()
+	}(nil)
 	for range countChan {
 		count++
 		if count == jobsNum {
@@ -397,7 +398,7 @@ func TestClock_Stop(t *testing.T) {
 		jobInterval = time.Millisecond * 100
 		count       = int32(0)
 	)
-	fn := func() {
+	fn := func(interface{}) {
 		atomic.AddInt32(&count, 1)
 	}
 	for i := 0; i < jobsNum; i++ {
@@ -418,7 +419,7 @@ func TestClock_StopGracefull(t *testing.T) {
 		jobInterval = time.Millisecond * 100
 		count       = int32(0)
 	)
-	fn := func() {
+	fn := func(interface{}) {
 		atomic.AddInt32(&count, 1)
 	}
 	for i := 0; i < jobsNum; i++ {
@@ -431,7 +432,7 @@ func TestClock_StopGracefull(t *testing.T) {
 }
 
 func BenchmarkClock_AddJob(b *testing.B) {
-	fn := func() { /*do nothing*/ }
+	fn := func(interface{}) { /*do nothing*/ }
 	myClock := NewClock().Reset()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -449,7 +450,7 @@ func BenchmarkClock_UpdateJob(b *testing.B) {
 		myClock  = NewClock()
 		jobCache = make([]Job, jobsNum)
 		r        = rand.New(rand.NewSource(time.Now().Unix()))
-		fn       = func() { /*do nothing*/ }
+		fn       = func(interface{}) { /*do nothing*/ }
 	)
 	for i := 0; i < jobsNum; i++ {
 		job, inserted := myClock.AddJobWithInterval(time.Second*20, fn)
